@@ -40,7 +40,7 @@ const rewrites = [];
 if (process.env.COLLECT_API_ENDPOINT) {
   rewrites.push({
     source: process.env.COLLECT_API_ENDPOINT,
-    destination: '/api/send',
+    destination: '/api/collect',
   });
 }
 
