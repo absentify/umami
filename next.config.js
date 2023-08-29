@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 require('dotenv').config();
+const path = require('path');
 const pkg = require('./package.json');
-
-const CLOUD_URL = 'https://cloud.umami.is';
 
 const contentSecurityPolicy = `
   default-src 'self';
@@ -10,7 +9,7 @@ const contentSecurityPolicy = `
   script-src 'self' 'unsafe-eval';
   style-src 'self' 'unsafe-inline';
   connect-src 'self' api.umami.is;
-  frame-ancestors 'self';
+  frame-ancestors 'self' ${process.env.ALLOWED_FRAME_URLS};
 `;
 
 const headers = [
@@ -60,12 +59,14 @@ if (process.env.TRACKER_SCRIPT_NAME) {
 const redirects = [
   {
     source: '/settings',
-    destination: process.env.CLOUD_MODE ? '/settings/profile' : '/settings/websites',
+    destination: process.env.CLOUD_MODE
+      ? `${process.env.CLOUD_URL}/settings/websites`
+      : '/settings/websites',
     permanent: true,
   },
 ];
 
-if (process.env.CLOUD_MODE && process.env.DISABLE_LOGIN && process.env.CLOUD_URL) {
+if (process.env.CLOUD_MODE && process.env.CLOUD_URL && process.env.DISABLE_LOGIN) {
   redirects.push({
     source: '/login',
     destination: process.env.CLOUD_URL,
@@ -75,7 +76,11 @@ if (process.env.CLOUD_MODE && process.env.DISABLE_LOGIN && process.env.CLOUD_URL
 
 const config = {
   env: {
+    cloudMode: process.env.CLOUD_MODE,
+    cloudUrl: process.env.CLOUD_URL,
+    configUrl: '/config',
     currentVersion: pkg.version,
+    defaultLocale: process.env.DEFAULT_LOCALE,
     isProduction: process.env.NODE_ENV === 'production',
   },
   basePath: process.env.BASE_PATH,
@@ -92,6 +97,8 @@ const config = {
       issuer: /\.{js|jsx|ts|tsx}$/,
       use: ['@svgr/webpack'],
     });
+
+    config.resolve.alias['public'] = path.resolve('./public');
 
     return config;
   },
